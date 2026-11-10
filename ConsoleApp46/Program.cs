@@ -10,7 +10,7 @@ namespace ConsoleApp46
             Console.OutputEncoding = Encoding.UTF8;
             Console.InputEncoding = Encoding.UTF8;
 
-            char[,] map = new char[21, 21];
+            char[,] map = new char[25, 25];
 
             Map.BiomeType selectedBiome = Map.SelectBiome();
             Person hero = new Person(100, "Герой");
