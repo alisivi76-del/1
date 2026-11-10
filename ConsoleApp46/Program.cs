@@ -11,17 +11,18 @@ namespace ConsoleApp46
             Console.InputEncoding = Encoding.UTF8;
 
             char[,] map = new char[21, 21];
-            Person hero = new Person(100, "Герой");
 
-            Map.Array(map);
+            Map.BiomeType selectedBiome = Map.SelectBiome();
+            Person hero = new Person(100, "Герой");
+            Map.GenerateMap(map, selectedBiome);
 
             Console.Clear();
             Map.GetMap(map);
-            Person.GetCharacter(hero);
+            hero.GetCharacter();
 
             bool exit = false;
 
-            while (!exit && hero.HP > 0)
+            while (!exit && hero.Hp > 0)
             {
                 Console.WriteLine("Стрелки — движение, Esc — выход.");
                 ConsoleKey key = Console.ReadKey(true).Key;
@@ -31,74 +32,48 @@ namespace ConsoleApp46
 
                 switch (key)
                 {
-                    case ConsoleKey.UpArrow:
-                        dr = -1;
-                        break;
-                    case ConsoleKey.DownArrow:
-                        dr = 1;
-                        break;
-                    case ConsoleKey.LeftArrow:
-                        dc = -1;
-                        break;
-                    case ConsoleKey.RightArrow:
-                        dc = 1;
-                        break;
-                    case ConsoleKey.Escape:
-                        exit = true;
-                        continue;
-                    default:
-                        continue;
+                    case ConsoleKey.UpArrow: dr = -1; break;
+                    case ConsoleKey.DownArrow: dr = 1; break;
+                    case ConsoleKey.LeftArrow: dc = -1; break;
+                    case ConsoleKey.RightArrow: dc = 1; break;
+                    case ConsoleKey.Escape: exit = true; continue;
+                    default: continue;
                 }
 
-                // Проверяем событие в клетке, куда пытается пойти герой
                 bool canMove = Map.GetIvent(hero, map, dr, dc);
 
-                if (hero.HP <= 0)
+                if (hero.Hp <= 0)
                 {
                     Console.WriteLine("Герой погиб. Игра окончена.");
                     break;
                 }
 
-                // Если впереди стена — не двигаемся
                 if (!canMove)
                 {
                     Map.GetMap(map);
-                    Person.GetCharacter(hero);
+                    hero.GetCharacter();
                     continue;
                 }
 
-                // Сдвигаем карту в зависимости от направления
-                if (dr == -1)
-                {
-                    Map.UpArray(map);
-                }
-                else if (dr == 1)
-                {
-                    Map.DownArray(map);
-                }
-                else if (dc == -1)
-                {
-                    Map.LeftArray(map);
-                }
-                else if (dc == 1)
-                {
-                    Map.RightArray(map);
-                }
+                if (dr == -1) Map.UpArray(map);
+                else if (dr == 1) Map.DownArray(map);
+                else if (dc == -1) Map.LeftArray(map);
+                else if (dc == 1) Map.RightArray(map);
 
-                // Проверяем текущую клетку героя.
-                // Это нужно, например, для выхода '0', который появляется после Win.
-                int levelBefore = Map.levelWorld;
-                Map.GetIvent(hero, map, 0, 0);
+                int levelBefore = Map.LevelWorld;
+                Map.GetIvent(hero, map, 0, 0); 
 
-                if (Map.levelWorld != levelBefore)
+                if (Map.LevelWorld != levelBefore)
                 {
+                    Map.GenerateMap(map, Map.SelectBiome()); 
+                    Console.Clear();
                     Map.GetMap(map);
                 }
 
-                Person.GetCharacter(hero);
+                hero.GetCharacter();
             }
 
-            if (hero.HP <= 0)
+            if (hero.Hp <= 0)
             {
                 Console.WriteLine("Поражение. Нажмите любую клавишу...");
                 Console.ReadKey(true);
