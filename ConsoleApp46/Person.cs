@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ConsoleApp46.World;
 
-namespace ConsoleApp46
+namespace ConsoleApp46.Models
 {
     public class Person
     {

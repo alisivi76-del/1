@@ -1,13 +1,13 @@
 ﻿using System;
+using ConsoleApp46.Models;
 
-namespace ConsoleApp46
+namespace ConsoleApp46.World
 {
     public class Map
     {
         public static int LevelWorld = 1;
         private static readonly Random Rnd = new Random();
 
-    
         public const char PlayerChar = '@';
         public const char EnemyChar = 'E';
         public const char TreeChar = 'T';
@@ -110,8 +110,7 @@ namespace ConsoleApp46
             }
         }
 
-  
-public static void GetMap(char[,] mas)
+        public static void GetMap(char[,] mas)
         {
             for (int i = 0; i < mas.GetLength(0); i++)
             {
@@ -205,8 +204,8 @@ public static void GetMap(char[,] mas)
                     if (j == (mas.GetLength(1) - 1)) temp[i] = mas[i, j];
                     else if (j == 0) mas[i, j] = temp[i];
                     if (j != 0) mas[i, j] = mas[i, j - 1];
-                    
-if (i == (mas.GetLength(0) - 1) / 2 && j == (mas.GetLength(1) - 1) / 2)
+
+                    if (i == (mas.GetLength(0) - 1) / 2 && j == (mas.GetLength(1) - 1) / 2)
                         mas[i, j] = PlayerChar;
                     if (i == (mas.GetLength(0) - 1) / 2 && j == (mas.GetLength(1) - 1) / 2)
                         mas[i, j + 1] = EmptyChar;
@@ -255,23 +254,20 @@ if (i == (mas.GetLength(0) - 1) / 2 && j == (mas.GetLength(1) - 1) / 2)
             Person Enemy = new Person(LevelWorld * 10);
             Random rnd = new Random();
 
-            // Бой идет, пока у обоих есть здоровье
             while (Enemy.Hp > 0 && Hero.Hp > 0)
             {
                 int Shot = rnd.Next(10);
                 Enemy.Hp -= Shot + Hero.Strength;
 
-                // Если враг убит, прерываем цикл, чтобы он не бил в ответ мертвым
                 if (Enemy.Hp <= 0) break;
 
-                // Враг бьет героя
                 Shot = rnd.Next(10);
                 Hero.Hp -= Shot + LevelWorld * 5;
             }
 
             if (Enemy.Hp <= 0)
             {
-                int reward = rnd.Next(10, 50); // Даем от 10 до 50 монет
+                int reward = rnd.Next(10, 50);
                 Hero.Coin += reward;
             }
             else if (Hero.Hp <= 0)
@@ -280,12 +276,13 @@ if (i == (mas.GetLength(0) - 1) / 2 && j == (mas.GetLength(1) - 1) / 2)
                 Hero.Coin -= lostCoins;
                 if (Hero.Hp < 0) Hero.Hp = 0;
 
-                Console.SetCursorPosition(0, 23); // Ставим курсор вниз экрана, чтобы не ломать карту
+                Console.SetCursorPosition(0, 23);
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Вы проиграли бой! Герой погиб...      ");
                 Console.ResetColor();
             }
         }
+
         static void Heart(Person Hero, char[,] mas)
         {
             Hero.MaxHp += 10;
@@ -327,8 +324,7 @@ if (i == (mas.GetLength(0) - 1) / 2 && j == (mas.GetLength(1) - 1) / 2)
                     }
                     else
                     {
-                      
-Console.WriteLine("Недостаточно монет!");
+                        Console.WriteLine("Недостаточно монет!");
                     }
                 }
             }
@@ -344,11 +340,11 @@ Console.WriteLine("Недостаточно монет!");
             {
                 case EnemyChar:
                     Batle(hero, mas);
-                    mas[centerRow, centerCol] = EmptyChar; 
+                    mas[centerRow, centerCol] = EmptyChar;
                     break;
                 case TreeChar:
                     Heart(hero, mas);
-                    mas[centerRow, centerCol] = EmptyChar; 
+                    mas[centerRow, centerCol] = EmptyChar;
                     break;
                 case ExitChar:
                     LevelWorld++;

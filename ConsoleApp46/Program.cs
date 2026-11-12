@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Text;
+using ConsoleApp46.Models;
+using ConsoleApp46.Save;
+using ConsoleApp46.World;
 
 namespace ConsoleApp46
 {
@@ -12,8 +15,15 @@ namespace ConsoleApp46
 
             char[,] map = new char[25, 25];
 
-            Map.BiomeType selectedBiome = Map.SelectBiome();
-            Person hero = new Person(100, "Герой");
+            Person hero;
+            Map.BiomeType selectedBiome;
+
+            if (!SaveManager.TryLoad(out hero, out selectedBiome))
+            {
+                selectedBiome = Map.SelectBiome();
+                hero = new Person(100, "Герой");
+            }
+
             Map.GenerateMap(map, selectedBiome);
 
             Console.Clear();
@@ -24,7 +34,7 @@ namespace ConsoleApp46
 
             while (!exit && hero.Hp > 0)
             {
-                Console.WriteLine("Стрелки — движение, Esc — выход.");
+                Console.WriteLine("Стрелки — движение, Esc — выход и сохранение.");
                 ConsoleKey key = Console.ReadKey(true).Key;
 
                 int dr = 0;
@@ -36,9 +46,18 @@ namespace ConsoleApp46
                     case ConsoleKey.DownArrow: dr = 1; break;
                     case ConsoleKey.LeftArrow: dc = -1; break;
                     case ConsoleKey.RightArrow: dc = 1; break;
-                    case ConsoleKey.Escape: exit = true; continue;
+                    case ConsoleKey.F5: 
+                        SaveManager.Save(hero, selectedBiome);
+                        Console.WriteLine("Нажмите стрелку, чтобы продолжить...");
+                        continue;
+                    case ConsoleKey.Escape:
+                        SaveManager.Save(hero, selectedBiome);
+                        exit = true;
+                        continue;
                     default: continue;
                 }
+
+                int levelBefore = Map.LevelWorld;
 
                 bool canMove = Map.GetIvent(hero, map, dr, dc);
 
@@ -60,12 +79,10 @@ namespace ConsoleApp46
                 else if (dc == -1) Map.LeftArray(map);
                 else if (dc == 1) Map.RightArray(map);
 
-                int levelBefore = Map.LevelWorld;
-                Map.GetIvent(hero, map, 0, 0); 
-
                 if (Map.LevelWorld != levelBefore)
                 {
-                    Map.GenerateMap(map, Map.SelectBiome()); 
+                    selectedBiome = Map.SelectBiome();
+                    Map.GenerateMap(map, selectedBiome);
                     Console.Clear();
                     Map.GetMap(map);
                 }
