@@ -13,32 +13,69 @@ namespace ConsoleApp46
             Console.OutputEncoding = Encoding.UTF8;
             Console.InputEncoding = Encoding.UTF8;
 
-            char[,] map = new char[25, 25];
-
-            Person hero;
-            Map.BiomeType selectedBiome;
-
-            if (!SaveManager.TryLoad(out hero, out selectedBiome))
+            // Один раз пытаемся выставить окно, чтобы кадр влез без скролла.
+            try
             {
-                selectedBiome = Map.SelectBiome();
-                hero = new Person(100, "Герой");
+                int w = Math.Min(120, Console.LargestWindowWidth);
+                int h = Math.Min(45, Console.LargestWindowHeight);
+                if (Console.BufferWidth < w || Console.BufferHeight < h)
+                    Console.SetBufferSize(Math.Max(Console.BufferWidth, w), Math.Max(Console.BufferHeight, h));
+                if (Console.WindowWidth < w || Console.WindowHeight < h)
+                    Console.SetWindowSize(w, h);
             }
+            catch { /* если не получилось — просто идём дальше */ }
 
-            Map.GenerateMap(map, selectedBiome);
+            Console.CursorVisible = false;
 
-            Console.Clear();
-            Map.GetMap(map);
-            hero.GetCharacter();
+            Map.BiomeType biome = Map.SelectBiome();
 
+            string[,] map = new string[25, 25];
+            Person hero = new Person(100, "АУФ");
+
+            Map.GenerateMap(map, biome);
             bool exit = false;
 
             while (!exit && hero.Hp > 0)
             {
-                Console.WriteLine("Стрелки — движение, Esc — выход и сохранение.");
-                ConsoleKey key = Console.ReadKey(true).Key;
+                Console.SetCursorPosition(0, 0);
 
-                int dr = 0;
-                int dc = 0;
+                Map.GetMap(map, biome);
+                hero.GetCharacter();
+                Map.WriteLinePadded($"Биом: {GetBiomeName(biome)}");
+
+                if (biome == Map.BiomeType.Mountains)
+                {
+                    int lineLen = "Тепло: ".Length +
+                                  $"{hero.Warmth} / {Map.MaxWarmth}".Length;
+
+                    Console.Write("Тепло: ");
+                    Console.ForegroundColor = hero.Warmth > 30 ? ConsoleColor.Yellow : ConsoleColor.Red;
+                    Console.Write($"{hero.Warmth} / {Map.MaxWarmth}");
+                    Console.ResetColor();
+
+                    if (hero.Warmth <= 0)
+                    {
+                        string warn = $"  << ВЫ ЗАМЕРЗАЕТЕ! (-{Map.ColdDamage} HP за шаг)";
+                        Console.ForegroundColor = ConsoleColor.Blue;
+                        Console.Write(warn);
+                        Console.ResetColor();
+                        lineLen += warn.Length;
+                    }
+                    int pad = Console.WindowWidth - 1 - lineLen;
+                    if (pad > 0) Console.Write(new string(' ', pad));
+                    Console.WriteLine();
+                }
+                else
+                {
+                    // Пустая строка вместо «тепла» — чтобы высота кадра
+                    // была одинаковой во всех биомах.
+                    Map.WriteLinePadded("");
+                }
+
+                Map.WriteLinePadded("Стрелки — движение, F5 — сохранить, Esc — выход.");
+
+                ConsoleKey key = Console.ReadKey(true).Key;
+                int dr = 0, dc = 0;
 
                 switch (key)
                 {
@@ -46,54 +83,64 @@ namespace ConsoleApp46
                     case ConsoleKey.DownArrow: dr = 1; break;
                     case ConsoleKey.LeftArrow: dc = -1; break;
                     case ConsoleKey.RightArrow: dc = 1; break;
-                    case ConsoleKey.F5: 
-                        SaveManager.Save(hero, selectedBiome);
-                        Console.WriteLine("Нажмите стрелку, чтобы продолжить...");
+                    case ConsoleKey.F5:
+                        SaveManager.Save(hero, biome);
+                        // выведем сообщение ниже кадра и подождём
+                        Map.ClearLines(34, 1);
+                        Console.SetCursorPosition(0, 34);
+                        Map.WriteLinePadded("Игра сохранена. Нажмите любую клавишу...");
+                        Console.ReadKey(true);
+                        Map.ClearLines(34, 1);
                         continue;
                     case ConsoleKey.Escape:
-                        SaveManager.Save(hero, selectedBiome);
+                        SaveManager.Save(hero, biome);
                         exit = true;
                         continue;
                     default: continue;
                 }
 
                 int levelBefore = Map.LevelWorld;
-
                 bool canMove = Map.GetIvent(hero, map, dr, dc);
 
-                if (hero.Hp <= 0)
-                {
-                    Console.WriteLine("Герой погиб. Игра окончена.");
-                    break;
-                }
-
-                if (!canMove)
-                {
-                    Map.GetMap(map);
-                    hero.GetCharacter();
-                    continue;
-                }
+                if (hero.Hp <= 0) break;
+                if (!canMove) continue;
 
                 if (dr == -1) Map.UpArray(map);
                 else if (dr == 1) Map.DownArray(map);
                 else if (dc == -1) Map.LeftArray(map);
                 else if (dc == 1) Map.RightArray(map);
 
+                Map.Win(map);
+                Map.SpawnHealIfNeeded(map);
+
+                Map.ApplyBiomeEffects(hero, biome);
+                if (hero.Hp <= 0) break;
+
                 if (Map.LevelWorld != levelBefore)
                 {
-                    selectedBiome = Map.SelectBiome();
-                    Map.GenerateMap(map, selectedBiome);
-                    Console.Clear();
-                    Map.GetMap(map);
+                    biome = Map.SelectBiome();
+                    hero.Warmth = Map.MaxWarmth;
+                    Map.GenerateMap(map, biome);
                 }
-
-                hero.GetCharacter();
             }
 
             if (hero.Hp <= 0)
             {
-                Console.WriteLine("Поражение. Нажмите любую клавишу...");
+                Console.SetCursorPosition(0, 0);
+                Console.Clear();
+                Console.WriteLine("Лелик погиб. Игра окончена.");
                 Console.ReadKey(true);
+            }
+        }
+
+        static string GetBiomeName(Map.BiomeType b)
+        {
+            switch (b)
+            {
+                case Map.BiomeType.Forest: return "Лес (туман)";
+                case Map.BiomeType.Mountains: return "Горы (холод)";
+                case Map.BiomeType.Rooms: return "Комнаты (ловушки и золото)";
+                default: return b.ToString();
             }
         }
     }

@@ -9,13 +9,8 @@ namespace ConsoleApp46.Save
     public static class SaveManager
     {
         private const string SavePath = "savegame.xml";
-
         public static string FullPath => Path.GetFullPath(SavePath);
-
-        public static bool Exists()
-        {
-            return File.Exists(SavePath);
-        }
+        public static bool Exists() => File.Exists(SavePath);
 
         public static void Save(Person hero, Map.BiomeType biome)
         {
@@ -26,6 +21,7 @@ namespace ConsoleApp46.Save
                 Hp = hero.Hp,
                 Strength = hero.Strength,
                 Coin = hero.Coin,
+                Warmth = hero.Warmth,
                 LevelWorld = Map.LevelWorld,
                 Biome = biome
             };
@@ -34,9 +30,7 @@ namespace ConsoleApp46.Save
             {
                 XmlSerializer serializer = new XmlSerializer(typeof(GameData));
                 using (FileStream stream = new FileStream(SavePath, FileMode.Create))
-                {
                     serializer.Serialize(stream, data);
-                }
                 Console.WriteLine($"Игра сохранена: {FullPath}");
             }
             catch (Exception ex)
@@ -69,6 +63,7 @@ namespace ConsoleApp46.Save
                     hero.MaxHp = data.MaxHp;
                     hero.Strength = data.Strength;
                     hero.Coin = data.Coin;
+                    hero.Warmth = data.Warmth > 0 ? data.Warmth : Map.MaxWarmth;
                     Map.LevelWorld = data.LevelWorld;
                     biome = data.Biome;
 

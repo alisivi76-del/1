@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using ConsoleApp46.World;
 
 namespace ConsoleApp46.Models
@@ -14,24 +10,25 @@ namespace ConsoleApp46.Models
         public int Strength { get; set; }
         public int Coin { get; set; }
         public string NamePerson { get; set; }
+        public int Warmth { get; set; }
 
-        public Person(int hp = 100, string name = "Враг")
+        public Person(int hp = 100, string name = "АУФ")
         {
             NamePerson = name;
             Hp = hp;
             MaxHp = hp;
-            Strength = 0;
+            Strength = 3;
             Coin = 0;
+            Warmth = Map.MaxWarmth;
         }
 
         public void GetCharacter()
         {
-            Console.WriteLine($"Имя героя = {NamePerson}");
-            Console.WriteLine($"Здоровье = {Hp}");
-            Console.WriteLine($"MAX Здоровье = {MaxHp}");
-            Console.WriteLine($"Деняк = {Coin}");
-            Console.WriteLine($"Уровень мира = {Map.LevelWorld}");
+            Map.WriteLinePadded($"Имя героя     = {NamePerson}");
+            Map.WriteLinePadded($"Здоровье      = {Hp} / {MaxHp}");
+            Map.WriteLinePadded($"Сила          = {Strength}");
+            Map.WriteLinePadded($"Монеты        = {Coin}");
+            Map.WriteLinePadded($"Уровень мира  = {Map.LevelWorld}");
         }
-
     }
 }
